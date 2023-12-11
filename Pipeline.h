@@ -25,6 +25,8 @@ class Pipeline : public Nan::ObjectWrap {
 		void setPad( GObject* elem, const char *attribute, const char *padName );
 		GObject *getPad( GObject* elem, const char *padName );
 
+		void setUpstreamProxy( GObject* elem, const char *sinkName, const char *srcName, GstElement* upstreamPipeline );
+		
 	private:
 		Pipeline(const char *launch);
 		Pipeline(GstPipeline *pipeline);
@@ -46,7 +48,8 @@ class Pipeline : public Nan::ObjectWrap {
 		static NAN_METHOD(FindChild);
 		static NAN_METHOD(SetPad);
 		static NAN_METHOD(GetPad);
-
+		static NAN_METHOD(SetUpstreamProxy);
+	
 		static void _doPollBus( uv_work_t *req );
 		static void _polledBus( uv_work_t *req, int );
 		static NAN_METHOD(PollBus);

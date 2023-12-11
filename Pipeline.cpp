@@ -47,6 +47,7 @@ void Pipeline::Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE exports) {
 	Nan::SetPrototypeMethod(ctor, "findChild", FindChild);
 	Nan::SetPrototypeMethod(ctor, "setPad", SetPad);
 	Nan::SetPrototypeMethod(ctor, "getPad", GetPad);
+	Nan::SetPrototypeMethod(ctor, "setUpstreamProxy", SetUpstreamProxy);
 	Nan::SetPrototypeMethod(ctor, "pollBus", PollBus);
 
 	Nan::SetAccessor(proto, Nan::New("auto-flush-bus").ToLocalChecked(), GetAutoFlushBus, SetAutoFlushBus);
@@ -219,6 +220,33 @@ NAN_METHOD(Pipeline::GetPad) {
 	}
 }
 
+NAN_METHOD(Pipeline::SetUpstreamProxy) {
+	GObject *psink, *psrc;
+	GstClock *clock;
+
+	// Pipeline with proxysrc
+	Pipeline* srcPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	// Pipeline with proxysink
+	Nan::MaybeLocal<v8::Object> maybeSinkPipeline = Nan::To<v8::Object>(info[0]);
+	Pipeline* sinkPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(maybeSinkPipeline.ToLocalChecked());
+
+	// sink
+	Nan::Utf8String proxySinkName(info[1]);
+	psink = sinkPipeline->findChild(*proxySinkName);
+	// src
+	Nan::Utf8String proxySrcName(info[2]);
+	psrc = srcPipeline->findChild(*proxySrcName);
+
+	// Connect the pipelines
+	g_object_set (psrc, "proxysink", psink, NULL);
+
+	// Sync the clock
+	clock = gst_system_clock_obtain ();
+	gst_pipeline_use_clock (GST_PIPELINE (srcPipeline->pipeline), clock);
+	gst_pipeline_use_clock (GST_PIPELINE (sinkPipeline->pipeline), clock);
+	g_object_unref (clock);
+}
 
 class BusRequest : public Nan::AsyncResource {
 	public:
