@@ -295,9 +295,9 @@ NAN_METHOD(Pipeline::PlayElement) {
 	}
 
 	// Reconfigure
-	GstPad *srcpad = gst_element_get_static_pad(e, "src");
+	/*GstPad *srcpad = gst_element_get_static_pad(e, "src");
 	gst_pad_push_event(srcpad, gst_event_new_reconfigure());
-	g_print("Sent reconfigure event\n");
+	g_print("Sent reconfigure event\n");*/
 
 	// Play
 	gst_element_set_state (e, GST_STATE_PLAYING);
