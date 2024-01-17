@@ -48,6 +48,10 @@ void Pipeline::Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE exports) {
 	Nan::SetPrototypeMethod(ctor, "setPad", SetPad);
 	Nan::SetPrototypeMethod(ctor, "getPad", GetPad);
 	Nan::SetPrototypeMethod(ctor, "setUpstreamProxy", SetUpstreamProxy);
+	Nan::SetPrototypeMethod(ctor, "removeUpstreamProxy", RemoveUpstreamProxy);
+	Nan::SetPrototypeMethod(ctor, "pauseElement", PauseElement);
+	Nan::SetPrototypeMethod(ctor, "playElement", PlayElement);
+	Nan::SetPrototypeMethod(ctor, "stopElement", StopElement);
 	Nan::SetPrototypeMethod(ctor, "pollBus", PollBus);
 
 	Nan::SetAccessor(proto, Nan::New("auto-flush-bus").ToLocalChecked(), GetAutoFlushBus, SetAutoFlushBus);
@@ -239,6 +243,7 @@ NAN_METHOD(Pipeline::SetUpstreamProxy) {
 	psrc = srcPipeline->findChild(*proxySrcName);
 
 	// Connect the pipelines
+	g_object_set (psrc, "proxysink", NULL, NULL);
 	g_object_set (psrc, "proxysink", psink, NULL);
 
 	// Sync the clock
@@ -246,6 +251,56 @@ NAN_METHOD(Pipeline::SetUpstreamProxy) {
 	gst_pipeline_use_clock (GST_PIPELINE (srcPipeline->pipeline), clock);
 	gst_pipeline_use_clock (GST_PIPELINE (sinkPipeline->pipeline), clock);
 	g_object_unref (clock);
+}
+
+NAN_METHOD(Pipeline::RemoveUpstreamProxy) {
+	GObject *psrc;
+
+	// Pipeline with proxysrc
+	Pipeline* srcPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	// proxysrc name
+	Nan::Utf8String proxySrcName(info[0]);
+	psrc = srcPipeline->findChild(*proxySrcName);
+
+	// Remove connection
+	g_object_set (psrc, "proxysink", NULL, NULL);
+}
+
+NAN_METHOD(Pipeline::PauseElement) {
+	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	Nan::Utf8String name(info[0]);
+	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	if(!e) {
+		g_print("Element to pause not found\n");
+		return;
+	}
+	gst_element_set_state (e, GST_STATE_PAUSED);
+	g_print("Pause element\n");
+}
+
+NAN_METHOD(Pipeline::PlayElement) {
+	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	Nan::Utf8String name(info[0]);
+	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	if(!e) {
+		g_print("Element to play not found\n");
+		return;
+	}
+	gst_element_set_state (e, GST_STATE_PLAYING);
+	g_print("Play element\n");
+}
+
+NAN_METHOD(Pipeline::StopElement) {
+	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	Nan::Utf8String name(info[0]);
+	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	if(!e) {
+		g_print("Element to stop not found\n");
+		return;
+	}
+	gst_element_set_state (e, GST_STATE_NULL);
+	g_print("Stop element\n");
 }
 
 class BusRequest : public Nan::AsyncResource {
