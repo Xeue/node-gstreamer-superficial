@@ -269,7 +269,6 @@ NAN_METHOD(Pipeline::RemoveUpstreamProxy) {
 
 NAN_METHOD(Pipeline::PauseElement) {
 	GstElement *e;
-
 	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
 
 	Nan::Utf8String name(info[0]);
@@ -280,31 +279,37 @@ NAN_METHOD(Pipeline::PauseElement) {
 		return;
 	}
 	gst_element_set_state (e, GST_STATE_PAUSED);
-	g_print("Pause element\n");
+	g_print("Paused element\n");
 }
 
 NAN_METHOD(Pipeline::PlayElement) {
-	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
 	Nan::Utf8String name(info[0]);
-	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
 	if(!e) {
 		g_print("Element to play not found\n");
 		return;
 	}
 	gst_element_set_state (e, GST_STATE_PLAYING);
-	g_print("Play element\n");
+	g_print("Played element\n");
 }
 
 NAN_METHOD(Pipeline::StopElement) {
-	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
 	Nan::Utf8String name(info[0]);
-	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
 	if(!e) {
 		g_print("Element to stop not found\n");
 		return;
 	}
 	gst_element_set_state (e, GST_STATE_NULL);
-	g_print("Stop element\n");
+	g_print("Stopped element\n");
 }
 
 class BusRequest : public Nan::AsyncResource {
