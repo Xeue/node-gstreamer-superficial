@@ -268,9 +268,13 @@ NAN_METHOD(Pipeline::RemoveUpstreamProxy) {
 }
 
 NAN_METHOD(Pipeline::PauseElement) {
-	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	GstElement *e;
+
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
 	Nan::Utf8String name(info[0]);
-	GstElement *e = gst_bin_get_by_name(GST_BIN(obj), *name);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
 	if(!e) {
 		g_print("Element to pause not found\n");
 		return;
