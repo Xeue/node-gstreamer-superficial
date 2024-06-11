@@ -48,6 +48,11 @@ void Pipeline::Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE exports) {
 	Nan::SetPrototypeMethod(ctor, "findChild", FindChild);
 	Nan::SetPrototypeMethod(ctor, "setPad", SetPad);
 	Nan::SetPrototypeMethod(ctor, "getPad", GetPad);
+	Nan::SetPrototypeMethod(ctor, "setUpstreamProxy", SetUpstreamProxy);
+	Nan::SetPrototypeMethod(ctor, "removeUpstreamProxy", RemoveUpstreamProxy);
+	Nan::SetPrototypeMethod(ctor, "pauseElement", PauseElement);
+	Nan::SetPrototypeMethod(ctor, "playElement", PlayElement);
+	Nan::SetPrototypeMethod(ctor, "stopElement", StopElement);
 	Nan::SetPrototypeMethod(ctor, "pollBus", PollBus);
 	Nan::SetPrototypeMethod(ctor, "quit", Quit);
 
@@ -247,6 +252,101 @@ NAN_METHOD(Pipeline::GetPad) {
 	}
 }
 
+NAN_METHOD(Pipeline::SetUpstreamProxy) {
+	GObject *psink, *psrc;
+	GstClock *clock;
+
+	// Pipeline with proxysrc
+	Pipeline* srcPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	// Pipeline with proxysink
+	Nan::MaybeLocal<v8::Object> maybeSinkPipeline = Nan::To<v8::Object>(info[0]);
+	Pipeline* sinkPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(maybeSinkPipeline.ToLocalChecked());
+
+	// sink
+	Nan::Utf8String proxySinkName(info[1]);
+	psink = sinkPipeline->findChild(*proxySinkName);
+	// src
+	Nan::Utf8String proxySrcName(info[2]);
+	psrc = srcPipeline->findChild(*proxySrcName);
+
+	// Connect the pipelines
+	g_object_set (psrc, "proxysink", NULL, NULL);
+	g_object_set (psrc, "proxysink", psink, NULL);
+
+	// Sync the clock
+	clock = gst_system_clock_obtain ();
+	gst_pipeline_use_clock (GST_PIPELINE (srcPipeline->pipeline), clock);
+	gst_pipeline_use_clock (GST_PIPELINE (sinkPipeline->pipeline), clock);
+	g_object_unref (clock);
+}
+
+NAN_METHOD(Pipeline::RemoveUpstreamProxy) {
+	GObject *psrc;
+
+	// Pipeline with proxysrc
+	Pipeline* srcPipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	// proxysrc name
+	Nan::Utf8String proxySrcName(info[0]);
+	psrc = srcPipeline->findChild(*proxySrcName);
+
+	// Remove connection
+	g_object_set (psrc, "proxysink", NULL, NULL);
+}
+
+NAN_METHOD(Pipeline::PauseElement) {
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	Nan::Utf8String name(info[0]);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
+	if(!e) {
+		g_print("Element to pause not found\n");
+		return;
+	}
+	gst_element_set_state (e, GST_STATE_PAUSED);
+	g_print("Paused element\n");
+}
+
+NAN_METHOD(Pipeline::PlayElement) {
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	Nan::Utf8String name(info[0]);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
+	if(!e) {
+		g_print("Element to play not found\n");
+		return;
+	}
+
+	// Reconfigure
+	/*GstPad *srcpad = gst_element_get_static_pad(e, "src");
+	gst_pad_push_event(srcpad, gst_event_new_reconfigure());
+	g_print("Sent reconfigure event\n");*/
+
+	// Play
+	gst_element_set_state (e, GST_STATE_PLAYING);
+	g_print("Played element\n");
+}
+
+NAN_METHOD(Pipeline::StopElement) {
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	Nan::Utf8String name(info[0]);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
+	if(!e) {
+		g_print("Element to stop not found\n");
+		return;
+	}
+	gst_element_set_state (e, GST_STATE_NULL);
+	g_print("Stopped element\n");
+}
+
 void Pipeline::Quit() {
 	gst_object_unref(GST_ELEMENT(pipeline));
 }
@@ -259,7 +359,6 @@ NAN_METHOD(Pipeline::Quit) {
 
 	obj->Quit();
 }
-
 
 class BusRequest : public Nan::AsyncResource {
 	public:
@@ -285,7 +384,7 @@ void Pipeline::_doPollBus(uv_work_t *req) {
 	BusRequest *br = static_cast<BusRequest*>(req->data);
 	GstBus *bus = gst_element_get_bus(GST_ELEMENT(br->obj->pipeline));
 	if(!bus) return;
-	br->msg = gst_bus_timed_pop(bus, GST_CLOCK_TIME_NONE);
+	br->msg = gst_bus_timed_pop(bus, 200000000); // GST_CLOCK_TIME_NONE, 100000000 = 100 ms	
 }
 
 void Pipeline::_polledBus(uv_work_t *req, int n) {
