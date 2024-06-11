@@ -99,7 +99,11 @@ class PullWorker : public Nan::AsyncWorker {
 		~PullWorker() {}
 
 		void Execute() {
-			sample = gst_app_sink_pull_sample(appsink);
+			if(GST_STATE(GST_ELEMENT(appsink)) == GST_STATE_PLAYING) {
+				sample = gst_app_sink_try_pull_sample(appsink, 50000000);
+			} else {
+				sample = gst_app_sink_try_pull_preroll(appsink, 50000000);
+			}
 		}
 
 		void HandleOKCallback() {
