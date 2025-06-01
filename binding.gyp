@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "gstreamer-superficial",
+      "target_name": "gstreamer",
       "sources": [ "gstreamer.cpp", "GLibHelpers.cpp", "GObjectWrap.cpp", "Pipeline.cpp" ],
 	  "include_dirs": [
 		"<!(node -e \"require('nan')\")"

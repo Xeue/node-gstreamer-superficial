@@ -1,5 +1,5 @@
 {
-  "name": "gstreamer-superficial",
+  "name": "xeue-gstreamer",
   "version": "1.7.5",
   "description": "Superficial GStreamer binding",
   "author": {
@@ -7,7 +7,7 @@
     "email": "mail@danielturing.com",
     "url": "http://danturing.com"
   },
-  "main": "./build/Release/gstreamer-superficial",
+  "main": "./build/Release/gstreamer",
   "repository": {
     "type": "git",
     "url": "git@github.com:dturing/node-gstreamer-superficial.git"
