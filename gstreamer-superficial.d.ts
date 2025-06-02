@@ -1,4 +1,4 @@
-declare module "gstreamer-superficial" {
+declare module "xeue-gstreamer" {
 	/**
 	 * Joins an array of pipeline children together using the
 	 * '!' separator.
@@ -83,6 +83,11 @@ declare module "gstreamer-superficial" {
 		setPad(element: GObject, attribute: string, padName: string)
 
 		getPad(element: GObject, padName: string);
+
+		pauseElement(element: GObject);
+		playElement(element: GObject);
+		negotiateElement(element: GObject);
+		stopElement(element: GObject);
 
 		pollBus(callback: (message: BussPollMessage) => void)
 

@@ -52,6 +52,7 @@ void Pipeline::Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE exports) {
 	Nan::SetPrototypeMethod(ctor, "removeUpstreamProxy", RemoveUpstreamProxy);
 	Nan::SetPrototypeMethod(ctor, "pauseElement", PauseElement);
 	Nan::SetPrototypeMethod(ctor, "playElement", PlayElement);
+	Nan::SetPrototypeMethod(ctor, "negotiateElement", NegotiateElement);
 	Nan::SetPrototypeMethod(ctor, "stopElement", StopElement);
 	Nan::SetPrototypeMethod(ctor, "pollBus", PollBus);
 	Nan::SetPrototypeMethod(ctor, "quit", Quit);
@@ -326,6 +327,28 @@ NAN_METHOD(Pipeline::PlayElement) {
 	/*GstPad *srcpad = gst_element_get_static_pad(e, "src");
 	gst_pad_push_event(srcpad, gst_event_new_reconfigure());
 	g_print("Sent reconfigure event\n");*/
+
+	// Play
+	gst_element_set_state (e, GST_STATE_PLAYING);
+	g_print("Played element\n");
+}
+
+NAN_METHOD(Pipeline::NegotiateElement) {
+	GstElement *e;
+	Pipeline* pipeline = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+
+	Nan::Utf8String name(info[0]);
+	e = GST_ELEMENT(pipeline->findChild(*name));
+
+	if(!e) {
+		g_print("Element to play not found\n");
+		return;
+	}
+
+	// Reconfigure
+	GstPad *srcpad = gst_element_get_static_pad(e, "src");
+	gst_pad_push_event(srcpad, gst_event_new_reconfigure());
+	g_print("Sent reconfigure event\n");
 
 	// Play
 	gst_element_set_state (e, GST_STATE_PLAYING);
