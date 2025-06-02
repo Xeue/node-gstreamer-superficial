@@ -48,6 +48,7 @@ void Pipeline::Init(Nan::ADDON_REGISTER_FUNCTION_ARGS_TYPE exports) {
 	Nan::SetPrototypeMethod(ctor, "findChild", FindChild);
 	Nan::SetPrototypeMethod(ctor, "setPad", SetPad);
 	Nan::SetPrototypeMethod(ctor, "getPad", GetPad);
+	Nan::SetPrototypeMethod(ctor, "getPadCaps", GetPadCaps);
 	Nan::SetPrototypeMethod(ctor, "setUpstreamProxy", SetUpstreamProxy);
 	Nan::SetPrototypeMethod(ctor, "removeUpstreamProxy", RemoveUpstreamProxy);
 	Nan::SetPrototypeMethod(ctor, "pauseElement", PauseElement);
@@ -248,6 +249,29 @@ NAN_METHOD(Pipeline::GetPad) {
 	GObject *pad = obj->getPad(o, *padName);
 	if(pad) {
 		info.GetReturnValue().Set(GObjectWrap::NewInstance(info, pad));
+	} else {
+		info.GetReturnValue().Set(Nan::Undefined());
+	}
+}
+
+GObject * Pipeline::getPadCaps(GObject* elem, const char *padName ) {
+	GstPad *pad = gst_element_get_static_pad(GST_ELEMENT(elem), padName);
+	GstCaps *caps = gst_pad_get_current_caps(pad);
+	return G_OBJECT(caps);
+}
+
+NAN_METHOD(Pipeline::GetPadCaps) {
+	Pipeline* obj = Nan::ObjectWrap::Unwrap<Pipeline>(info.This());
+	Nan::Utf8String name(info[0]);
+	GObject *o = obj->findChild(*name);
+	if (!o) {
+		return;
+	}
+
+	Nan::Utf8String padName(info[1]);
+	GObject *caps = obj->getPadCaps(o, *padName);
+	if(caps) {
+		info.GetReturnValue().Set(GObjectWrap::NewInstance(info, caps));
 	} else {
 		info.GetReturnValue().Set(Nan::Undefined());
 	}

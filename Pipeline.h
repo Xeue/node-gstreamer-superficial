@@ -26,12 +26,14 @@ class Pipeline : public Nan::ObjectWrap {
 
 		void setPad( GObject* elem, const char *attribute, const char *padName );
 		GObject *getPad( GObject* elem, const char *padName );
+		GObject *getPadCaps( GObject* elem, const char *padName );
 
 		void setUpstreamProxy( GObject* elem, const char *sinkName, const char *srcName, GstElement* upstreamPipeline );
 		void removeUpstreamProxy( GObject* elem, const char *srcName );
 		
 		void pauseElement( GObject* elem, const char *name );
 		void playElement( GObject* elem, const char *name );
+		void negotiateElement( GObject* elem, const char *name );
 		void stopElement( GObject* elem, const char *name );
 		
 
@@ -57,10 +59,12 @@ class Pipeline : public Nan::ObjectWrap {
 		static NAN_METHOD(FindChild);
 		static NAN_METHOD(SetPad);
 		static NAN_METHOD(GetPad);
+		static NAN_METHOD(GetPadCaps);
 		static NAN_METHOD(SetUpstreamProxy);
 		static NAN_METHOD(RemoveUpstreamProxy);
 		static NAN_METHOD(PauseElement);
 		static NAN_METHOD(PlayElement);
+		static NAN_METHOD(NegotiateElement);
 		static NAN_METHOD(StopElement);
 		static NAN_METHOD(Quit);
 
