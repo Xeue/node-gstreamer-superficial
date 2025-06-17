@@ -1,6 +1,6 @@
 {
   "name": "xeue-gstreamer",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "Superficial GStreamer binding",
   "author": {
     "name": "Daniel Turing",

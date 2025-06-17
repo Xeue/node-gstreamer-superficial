@@ -40,7 +40,7 @@ class Pipeline : public Nan::ObjectWrap {
 	private:
 		Pipeline(const char *launch);
 		Pipeline(GstPipeline *pipeline);
-		~Pipeline() {}
+		~Pipeline();
 
 		static Nan::Persistent<Function> constructor;
 
